@@ -165,6 +165,7 @@
   let t = 0;
   const LITE_CAM = 1.55; // la cámara se aleja en pantallas estrechas
   const LOGO_UNITS_H = 4.7; // alto del logo en unidades de escena
+  const LOGO_UNITS_W = 8.75; // ancho del logo (de frente) en unidades de escena
   const sideFactor = lite ? 0.15 : 1; // en móvil el logo no se desplaza al lado
 
   useTask((dt) => {
@@ -179,7 +180,8 @@
 
     logo.rotation.y += (story.rotY - logo.rotation.y) * k;
     logo.rotation.x += (story.rotX - logo.rotation.x) * k;
-    logo.position.x += (story.logoX * sideFactor - logo.position.x) * k;
+    // En móvil el logo apenas se desplaza al lado, y en el hero nada (queda centrado en su hueco)
+    let baseX = story.logoX * (lite ? (1 - story.heroW) * sideFactor : 1);
     const lift = lite ? story.lift * 3.2 : 0;
     let baseY = story.logoY + lift;
     let fit = 1;
@@ -194,6 +196,24 @@
       baseY += story.heroW * (centerUpPx * unitsPerPx - baseY);
       fit = 1 + story.heroW * (Math.min(1, Math.max(0.45, (freeH * 0.94) / logoPx)) - 1);
     }
+    // Escritorio, hero: el texto ocupa la izquierda, así que el logo va centrado en el hueco libre de
+    // la derecha (y se reduce si no cabe). Solo al principio: heroW cae a 0 al pasar a Perfil y el
+    // logo sigue su recorrido normal. Se calcula con el hueco medido, así vale para cualquier pantalla.
+    if (!lite && story.heroW > 0 && layout.heroFreeRight - layout.heroFreeLeft > 200) {
+      const vw = window.innerWidth;
+      const unitsPerPx = (2 * Math.tan(THREE.MathUtils.degToRad(20)) * story.camZ) / window.innerHeight; // fov 40°
+      const freeW = layout.heroFreeRight - layout.heroFreeLeft;
+      const logoPx = (LOGO_UNITS_W * story.scale) / unitsPerPx;
+      const targetX = ((layout.heroFreeLeft + layout.heroFreeRight) / 2 - vw / 2) * unitsPerPx;
+      baseX += story.heroW * (targetX - baseX);
+      fit = 1 + story.heroW * (Math.min(1, Math.max(0.5, (freeW * 0.94) / logoPx)) - 1);
+      // Vertical: a la par del bloque de texto (centro del bloque = centro del logo)
+      if (layout.heroTextBottom > layout.heroTextTop) {
+        const textCenterUpPx = window.innerHeight / 2 - (layout.heroTextTop + layout.heroTextBottom) / 2;
+        baseY += story.heroW * (textCenterUpPx * unitsPerPx - baseY);
+      }
+    }
+    logo.position.x += (baseX - logo.position.x) * k;
     logo.position.y += (baseY + Math.sin(t * 0.8) * 0.12 - logo.position.y) * k;
     const s = story.scale * (lite ? 0.8 : 1) * fit;
     logo.scale.setScalar(logo.scale.x + (s - logo.scale.x) * k);

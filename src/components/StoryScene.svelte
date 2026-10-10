@@ -67,6 +67,38 @@
     } else {
       layout.heroFreeTop = layout.heroFreeBottom = 0;
     }
+
+    // Escritorio: hueco libre a la derecha del texto del hero, hasta el borde del contenedor.
+    // El ancho del texto se mide con un Range (el ancho de la caja de un <h1> o <p> llega hasta
+    // el borde del contenedor aunque el texto sea más corto).
+    const hero = document.querySelector<HTMLElement>('section[data-scene="0"]');
+    if (!lite && hero) {
+      let textRight = 0;
+      // Solo nodos de texto visibles: el texto .sr-only (p. ej. dentro del <h1>) se desborda en una línea
+      // de 1px de ancho y falsearía la medida.
+      const walker = document.createTreeWalker(hero, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim() || node.parentElement?.closest('.sr-only, a')) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        textRight = Math.max(textRight, range.getBoundingClientRect().right);
+      }
+      hero.querySelectorAll<HTMLElement>('a').forEach((a) => (textRight = Math.max(textRight, a.getBoundingClientRect().right)));
+      const container = hero.firstElementChild as HTMLElement | null;
+      const containerRight = container ? container.getBoundingClientRect().right : window.innerWidth;
+      layout.heroFreeLeft = textRight + 24;
+      layout.heroFreeRight = Math.min(containerRight, window.innerWidth - 24);
+      // Extensión vertical del bloque de texto (del primer al último elemento), en coordenadas de
+      // layout: no les afecta el desplazamiento de la animación de aparición.
+      const blocks = container ? Array.from(container.children) as HTMLElement[] : [];
+      if (blocks.length) {
+        layout.heroTextTop = absTop(blocks[0]);
+        const last = blocks[blocks.length - 1];
+        layout.heroTextBottom = absTop(last) + last.offsetHeight;
+      }
+    } else {
+      layout.heroFreeLeft = layout.heroFreeRight = layout.heroTextTop = layout.heroTextBottom = 0;
+    }
   }
 
   function updateStory() {

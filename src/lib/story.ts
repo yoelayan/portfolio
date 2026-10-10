@@ -51,8 +51,11 @@ export const keyframes: SceneState[] = [
 /**
  * Medidas de maquetación que necesita la escena (px, en coordenadas de página con scroll 0).
  * En móvil/tablet el texto del hero ocupa la parte baja de la pantalla; el logo debe quedar en el
- * hueco libre entre el menú y el primer texto. Las rellena StoryScene.measureScenes().
+ * hueco libre entre el menú y el primer texto. En escritorio, el texto del hero ocupa la
+ * izquierda y el logo va en el hueco libre de la derecha (heroFreeLeft/Right, px de pantalla).
+ * heroTextTop/Bottom: extensión vertical del bloque de texto, para alinear el logo con él.
+ * Las rellena StoryScene.measureScenes().
  */
-export const layout = { heroFreeTop: 0, heroFreeBottom: 0 };
+export const layout = { heroFreeTop: 0, heroFreeBottom: 0, heroFreeLeft: 0, heroFreeRight: 0, heroTextTop: 0, heroTextBottom: 0 };
 
 export const story: SceneState = { ...keyframes[0] };
