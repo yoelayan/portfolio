@@ -1,0 +1,198 @@
+---
+import Base from '../layouts/Base.astro';
+import StoryScene from './StoryScene.svelte';
+import SectionTitle from './SectionTitle.astro';
+import ContactCard from './ContactCard.astro';
+import TicketCard from './TicketCard.astro';
+import Badge from './Badge.astro';
+import { ui, contact, pathFor, otherLocale, type Locale } from '../i18n/ui';
+
+interface Props { lang: Locale }
+const { lang } = Astro.props;
+const t = ui[lang];
+const other = otherLocale(lang);
+// Fondo y color de texto de cada servicio. Contraste (WCAG): blanco sobre rosa ≈ 4,5:1 (en el límite;
+// excepción aceptada por ser color de marca), navy sobre cian ≈ 9:1, sobre amarillo y verde > 10:1.
+// El blanco sobre cian se descartó: ≈ 2:1.
+const cardStyles = [
+  { color: 'var(--color-pink)', text: '#fff' },
+  { color: 'var(--color-sky)', text: 'var(--color-navy)' },
+  { color: 'var(--color-sun)', text: 'var(--color-navy)' },
+  { color: 'var(--color-mint)', text: 'var(--color-navy)' },
+];
+---
+<Base lang={lang}>
+  <a href="#main" class="sr-only-link fixed left-4 top-4 z-50 rounded bg-mint px-4 py-2 font-semibold text-navy">{t.skip}</a>
+
+  <!-- Decoración: numeración de líneas. Se rellena en el cliente según la altura de la página
+       (StoryScene.fitGutter); las líneas de código del fondo son parte de la escena 3D. -->
+  <ol class="code-gutter" aria-hidden="true"></ol>
+
+  <StoryScene client:load transition:persist="scene" alt={t.a11y.sceneAlt} />
+
+  <header class="fixed inset-x-0 top-0 z-20 border-b border-white/10 bg-navy/70 backdrop-blur-md">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2 sm:flex-nowrap sm:px-6 sm:py-4 lg:pl-16">
+      <a href={pathFor(lang)} class="order-1 flex items-center gap-2" aria-label="Yoel Ayan">
+        <img src="/logo.svg" alt="" width="44" height="25" />
+        <span class="hidden font-display text-sm font-bold sm:inline">Yoel Ayan</span>
+      </a>
+      <a
+        href={pathFor(other)}
+        hreflang={other}
+        lang={other}
+        aria-label={t.lang.switchTo}
+        title={t.lang.switchTo}
+        class="order-2 rounded-full border border-white/40 px-3 py-1 text-xs font-bold hover:border-mint hover:text-mint sm:order-3 sm:text-sm"
+      >{t.lang.short}</a>
+      <nav aria-label={t.nav.label} class="order-3 flex w-full items-center justify-between gap-2 text-xs sm:order-2 sm:w-auto sm:justify-start sm:gap-6 sm:text-sm">
+        <a class="hover:text-mint" href="#about">{t.nav.about}</a>
+        <a class="hover:text-mint" href="#services">{t.nav.services}</a>
+        <a class="hover:text-mint" href="#projects">{t.nav.projects}</a>
+        <a class="hover:text-mint" href="#skills">{t.nav.skills}</a>
+        <a class="hover:text-mint" href="#contact">{t.nav.contact}</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="relative z-10" data-scene-alt={t.a11y.sceneAlt}>
+    <!-- 0 · HERO -->
+    <section data-scene="0" class="flex min-h-svh items-end px-4 pb-16 pt-32 sm:px-6 sm:pb-24 sm:pt-28">
+      <div class="mx-auto w-full max-w-6xl">
+        <p data-reveal class="mb-3 text-xs font-semibold uppercase tracking-widest text-mint sm:text-sm" aria-hidden="true">{t.hero.kicker}</p>
+        <h1 data-reveal class="text-5xl font-extrabold sm:text-7xl lg:text-8xl">{t.hero.title}<span class="sr-only"> — {t.hero.kicker}</span></h1>
+        <p data-reveal class="mt-2 font-display text-xl font-semibold text-white/90 sm:text-3xl">{t.hero.role}</p>
+        <p data-reveal class="mt-5 max-w-xl text-sm text-white/80 sm:text-base">{t.hero.lead}</p>
+        <!-- Eslogan: línea vertical blanca + acento amarillo (pieza "Tips tecnológico") -->
+        <blockquote data-reveal class="mt-6 max-w-md border-l-2 border-white/80 pl-4 text-sm leading-relaxed sm:text-base">
+          {t.slogan.pre}<br /><strong class="font-bold text-sun">{t.slogan.highlight}</strong>{t.slogan.post}
+        </blockquote>
+        <div data-reveal class="mt-8 flex flex-wrap gap-3">
+          <a href="#contact" class="rounded-full bg-violet px-6 py-3 text-sm font-bold hover:bg-pink">{t.hero.ctaPrimary}</a>
+          <a href="#services" class="rounded-full border border-white/40 px-6 py-3 text-sm font-bold hover:border-mint hover:text-mint">{t.hero.ctaSecondary}</a>
+        </div>
+        <p class="mt-10 text-xs text-white/60" aria-hidden="true">↓ {t.hero.scroll}</p>
+      </div>
+    </section>
+
+    <!-- 1 · PERFIL (texto a la izquierda, logo a la derecha) -->
+    <section id="about" data-scene="1" class="flex px-4 pb-16 pt-[56svh] sm:px-6 lg:min-h-screen lg:items-center lg:py-24">
+      <div class="mx-auto w-full max-w-6xl">
+        <div data-card class="panel panel-brace mx-auto w-full max-w-xl p-5 pb-12 sm:p-8 sm:pb-14 lg:mx-0">
+          <SectionTitle title={t.about.title} />
+          <div class="space-y-4 text-sm leading-relaxed text-white/90">
+            {t.about.paragraphs.map((para) => <p data-reveal>{para}</p>)}
+            <p data-reveal class="border-l-2 border-white/80 pl-4 font-display text-lg font-bold text-sun">{t.about.ready}</p>
+          </div>
+          <h3 class="mt-8 text-sm font-bold uppercase tracking-widest text-sun">{t.about.stackTitle}</h3>
+          <ul class="mt-3 flex flex-wrap gap-2">
+            {t.about.stack.map((s) => <li><Badge>{s}</Badge></li>)}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · SERVICIOS (texto a la derecha, logo a la izquierda) -->
+    <section id="services" data-scene="2" class="flex px-4 pb-16 pt-[56svh] sm:px-6 lg:min-h-screen lg:items-center lg:py-24">
+      <div class="mx-auto flex w-full max-w-6xl lg:justify-end">
+        <div data-card class="panel panel-brace mx-auto w-full max-w-2xl p-5 pb-12 sm:p-8 sm:pb-14 lg:mx-0">
+          <SectionTitle title={t.services.title} />
+          <p data-reveal class="border-l-2 border-white/80 pl-4 text-sm text-white/85">{t.services.lead}</p>
+          <ul class="mt-8 grid gap-5 sm:grid-cols-2">
+            {t.services.items.map((s, i) => (
+              <li data-reveal>
+                <TicketCard color={cardStyles[i % cardStyles.length].color} text={cardStyles[i % cardStyles.length].text} class="h-full">
+                  <h3 class="font-display text-base font-bold">{s.title}</h3>
+                  {s.lead && <p class="mt-1 text-xs font-bold">{s.lead}</p>}
+                  <p class="mt-1 text-xs leading-relaxed">{s.text}</p>
+                </TicketCard>
+              </li>
+            ))}
+          </ul>
+          <h3 data-reveal class="mt-10 text-sm font-bold uppercase tracking-widest text-mint">{t.services.processTitle}</h3>
+          <ol class="mt-4 space-y-3 text-sm">
+            {t.services.steps.map((s, i) => (
+              <li data-reveal class="flex gap-3">
+                <span class="font-display font-extrabold text-sun">{String(i + 1).padStart(2, '0')}</span>
+                <span><strong>{s.title}</strong><br /><span class="text-white/80">{s.text}</span></span>
+              </li>
+            ))}
+          </ol>
+          <p class="mt-6 text-xs text-white/60">{t.services.note}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · PROYECTOS -->
+    <section id="projects" data-scene="3" class="flex px-4 pb-16 pt-[56svh] sm:px-6 lg:min-h-screen lg:items-center lg:py-24">
+      <div class="mx-auto w-full max-w-6xl">
+        <div data-card class="panel panel-brace mx-auto w-full max-w-xl p-5 pb-12 sm:p-8 sm:pb-14 lg:mx-0">
+          <SectionTitle title={t.projects.title} />
+          <p data-reveal class="border-l-2 border-white/80 pl-4 text-sm text-white/85">{t.projects.lead}</p>
+          <ul class="mt-6 space-y-6">
+            {t.projects.items.map((p) => (
+              <li data-reveal class="border-l-4 border-violet pl-4">
+                <h3 class="font-display text-lg font-bold">{p.title}</h3>
+                <p class="mt-1 text-sm leading-relaxed text-white/85">{p.text}</p>
+                <ul class="mt-3 flex flex-wrap gap-2">
+                  {p.tags?.map((tag) => <li><Badge variant="accent">{tag}</Badge></li>)}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · ESTUDIOS Y HABILIDADES (texto a la derecha, logo a la izquierda) -->
+    <section id="skills" data-scene="4" class="flex px-4 pb-16 pt-[56svh] sm:px-6 lg:min-h-screen lg:items-center lg:py-24">
+      <div class="mx-auto flex w-full max-w-6xl lg:justify-end">
+        <div data-card class="panel panel-brace mx-auto w-full max-w-2xl p-5 pb-12 sm:p-8 sm:pb-14 lg:mx-0">
+          <SectionTitle title={t.skills.title} />
+          <div class="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            {t.skills.groups.map((g) => (
+              <div data-reveal>
+                <h3 class="text-xs font-bold uppercase tracking-widest text-sun">{g.title}</h3>
+                <ul class="mt-2 flex flex-wrap gap-1.5">
+                  {g.items.map((item) => <li><Badge>{item}</Badge></li>)}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <h3 data-reveal class="mt-8 text-xs font-bold uppercase tracking-widest text-mint">{t.skills.educationTitle}</h3>
+          <p data-reveal class="mt-2 border-l-2 border-white/80 pl-4 text-sm leading-relaxed text-white/90">{t.skills.education}</p>
+
+          <h3 data-reveal class="mt-6 text-xs font-bold uppercase tracking-widest text-mint">{t.skills.certsTitle}</h3>
+          <ul class="mt-3 space-y-2 text-sm">
+            {t.skills.certs.map((c) => (
+              <li data-reveal class="flex items-baseline gap-3">
+                <span class="font-display text-xs font-extrabold text-sun">{c.year}</span>
+                <span>{c.name} <span class="text-white/60">· {c.issuer}</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · CONTACTO (logo centrado, grande) -->
+    <section id="contact" data-scene="5" class="flex min-h-svh items-end justify-center px-4 pb-16 pt-[40svh] text-center sm:px-6 lg:pb-24 lg:pt-24">
+      <!-- Tarjeta de presentación sobre un fondo #0c123a semitransparente: deja ver el logo 3D detrás -->
+      <div data-card class="contact-wrap w-full max-w-xl rounded-3xl p-3 text-left sm:p-5">
+        <ContactCard title={t.contact.cardTitle} />
+        <p data-reveal class="mt-5 px-1 text-sm text-white/85">{t.contact.lead}</p>
+        <div data-reveal class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 px-1">
+          <a href={contact.whatsapp} rel="noopener" target="_blank" class="rounded-full bg-mint px-7 py-3 text-sm font-extrabold text-navy hover:bg-sun">{t.contact.cta}</a>
+          <a class="text-sm underline underline-offset-4 hover:text-mint" href={contact.linkedin} rel="me noopener" target="_blank">{t.contact.linkedin}</a>
+          <a class="text-sm underline underline-offset-4 hover:text-mint" href={contact.github} rel="me noopener" target="_blank">{t.contact.github}</a>
+        </div>
+        <p class="mt-4 px-1 text-xs text-white/60">{t.contact.availability}</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="relative z-10 px-4 py-6 text-center text-xs text-white/60">
+    <p class="mb-1 text-white/80">{t.slogan.pre} <strong class="text-sun">{t.slogan.highlight}</strong>{t.slogan.post}</p>
+    © {new Date().getFullYear()} Yoel Ayan · {t.footer}
+  </footer>
+</Base>

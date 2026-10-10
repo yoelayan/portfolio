@@ -1,0 +1,62 @@
+---
+// Tarjeta "ticket" de la identidad. La forma sale del SVG de referencia (viewBox 256):
+//  - cuerpo: rectángulo redondeado (x 46–210, y 40–216) con una punta hacia fuera en el
+//    centro de cada lateral (hasta x 31 / 225);
+//  - corchetes curvos "{ }" encima, que sobresalen 8 unidades por arriba y por abajo.
+//
+// Uso:
+//   <TicketCard color="var(--color-sun)" text="#fff" logo align="center">
+//     <p>Contenido…</p>
+//   </TicketCard>
+//
+// API pensada para reutilizarlo: color, text, logo y align (logo/align están disponibles aunque hoy
+// no se usen en la página).
+//
+// Cada extremo es un SVG de ancho fijo que solo se estira en vertical (el corchete se dibuja
+// como trazo con grosor constante), así la forma se mantiene con cualquier cantidad de texto.
+// El extremo derecho es el izquierdo reflejado. Los corchetes son siempre blancos (#fff).
+interface Props {
+  /** Color del cuerpo (cualquier valor CSS). */
+  color?: string;
+  /** Color del texto (por defecto azul marino; blanco sobre colores oscuros). */
+  text?: string;
+  /** Muestra la marca (logo) arriba del contenido. */
+  logo?: boolean;
+  align?: 'left' | 'center';
+  class?: string;
+}
+const { color = 'var(--color-sun)', text = 'var(--color-navy)', logo = false, align = 'left', class: className } = Astro.props;
+
+// Mitad izquierda del cuerpo (con la punta hacia fuera) y línea central del corchete "{".
+const bodyLeft = 'M80 40H64C51 40 46 50 46 65V115L31 128L46 141V191C46 206 51 216 64 216H80Z';
+const braceLeft = 'M80 40C52 40 48 56 48 84C48 108 44 120 16 128C44 136 48 148 48 172C48 200 52 216 80 216';
+---
+<div class:list={['ticket', className]} style={`--ticket:${color};--ticket-text:${text}`} data-align={align}>
+  <div class="cap" aria-hidden="true">
+    <svg viewBox="8 40 72 176" preserveAspectRatio="none" focusable="false">
+      <path d={bodyLeft} fill="var(--ticket)" />
+      <path d={braceLeft} fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+    </svg>
+  </div>
+  <div class="ticket-body">
+    {logo && <img src="/logo.svg" alt="" width="40" height="23" class="ticket-logo" />}
+    <slot />
+  </div>
+  <div class="cap cap-right" aria-hidden="true">
+    <svg viewBox="8 40 72 176" preserveAspectRatio="none" focusable="false">
+      <path d={bodyLeft} fill="var(--ticket)" />
+      <path d={braceLeft} fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+    </svg>
+  </div>
+</div>
+
+<style>
+  .ticket { display: flex; align-items: stretch; color: var(--ticket-text); }
+  .cap { position: relative; flex: none; width: 40px; }
+  .cap svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  .cap-right { transform: scaleX(-1); }
+  .ticket-body { flex: 1; min-width: 0; background: var(--ticket); padding: 1.1rem 0.25rem; }
+  .ticket[data-align='center'] .ticket-body { text-align: center; }
+  .ticket-logo { display: block; height: auto; margin-bottom: 0.6rem; }
+  .ticket[data-align='center'] .ticket-logo { margin-inline: auto; }
+</style>

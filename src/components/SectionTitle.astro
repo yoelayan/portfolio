@@ -1,0 +1,10 @@
+---
+// Recurso gráfico de la identidad: etiqueta verde con texto azul marino + llave "{" blanca
+// (ver pieza "TIPS TECNOLÓGICO"). Es el h2 de cada sección.
+interface Props { title: string }
+const { title } = Astro.props;
+---
+<div data-reveal class="mb-6 flex items-start gap-2">
+  <h2 class="inline-block bg-mint px-3 py-1 font-display text-2xl font-extrabold uppercase leading-tight tracking-tight text-navy sm:text-3xl">{title}</h2>
+  <span class="font-mono text-5xl font-light leading-[0.8] text-white" aria-hidden="true">&#123;</span>
+</div>

@@ -1,0 +1,17 @@
+---
+// 404 propio y bilingüe. No se indexa (Base.astro con noindex) y no carga la escena 3D.
+import Base from '../layouts/Base.astro';
+---
+<Base lang="es" noindex title="404 · Yoel Ayan">
+  <main class="grid min-h-svh place-items-center px-4 text-center">
+    <div class="max-w-md">
+      <img src="/logo.svg" alt="" width="88" height="50" class="mx-auto" />
+      <h1 class="mt-6 font-display text-6xl font-extrabold">404</h1>
+      <p class="mt-3 text-sm text-white/85">Esta página no existe. · This page does not exist.</p>
+      <p class="mt-8 flex justify-center gap-3 text-sm font-bold">
+        <a href="/" class="rounded-full bg-violet px-6 py-3 hover:bg-pink">Inicio</a>
+        <a href="/en/" class="rounded-full border border-white/40 px-6 py-3 hover:border-mint hover:text-mint">Home</a>
+      </p>
+    </div>
+  </main>
+</Base>

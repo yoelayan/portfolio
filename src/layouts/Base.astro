@@ -1,0 +1,117 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+// Solo el subset "latin" (cubre ñ, tildes, ¿ ¡ y la puntuación usada). Las @font-face están en
+// global.css; aquí se precargan los dos archivos críticos para evitar el salto de fuente.
+import montserratLatin from '@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2?url';
+import sourceCodeLatin from '@fontsource-variable/source-code-pro/files/source-code-pro-latin-wght-normal.woff2?url';
+import { ui, contact, pathFor, locales, type Locale } from '../i18n/ui';
+import { PALETTE } from '../lib/brand.js';
+
+interface Props {
+  lang: Locale;
+  /** Páginas que no deben indexarse (404): sin canonical, hreflang ni Open Graph de página. */
+  noindex?: boolean;
+  title?: string;
+}
+const { lang, noindex = false, title } = Astro.props;
+const t = ui[lang];
+const pageTitle = title ?? t.meta.title;
+
+const site = Astro.site!;
+const canonical = new URL(pathFor(lang), site).href;
+const alternates = [
+  ...locales.map((l) => ({ hreflang: l, href: new URL(pathFor(l), site).href })),
+  { hreflang: 'x-default', href: new URL(pathFor('es'), site).href },
+];
+const ogImage = new URL('/og.png', site).href;
+const personId = new URL('/#person', site).href;
+
+// Un solo grafo: la misma persona (@id fijo) y el sitio, con el idioma de cada página.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      '@id': personId,
+      name: 'Yoel Ayan Guerrero',
+      alternateName: 'Yoel Ayan',
+      url: canonical,
+      image: ogImage,
+      jobTitle: t.meta.jobTitle,
+      description: t.meta.description,
+      email: `mailto:${contact.email}`,
+      worksFor: { '@type': 'Organization', name: 'Leasy' },
+      sameAs: [contact.github, contact.linkedin, contact.instagram],
+      knowsAbout: ['Python', 'Django', 'Fintech', 'ERP', 'Domain-Driven Design', 'PostgreSQL', 'AWS', 'Software architecture'],
+      knowsLanguage: ['es', 'en'],
+      address: { '@type': 'PostalAddress', addressLocality: 'Tenerife', addressCountry: 'ES' },
+    },
+    {
+      '@type': 'WebSite',
+      url: canonical,
+      name: 'Yoel Ayan',
+      inLanguage: lang,
+      author: { '@id': personId },
+    },
+  ],
+};
+---
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={t.meta.description} />
+    <meta name="author" content="Yoel Ayan" />
+    <meta name="theme-color" content={PALETTE.navy} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href={montserratLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={sourceCodeLatin} as="font" type="font/woff2" crossorigin />
+
+    {noindex ? (
+      <meta name="robots" content="noindex" />
+    ) : (
+      <>
+        <link rel="canonical" href={canonical} />
+        {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+        <link rel="sitemap" href="/sitemap-index.xml" />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Yoel Ayan" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={t.meta.description} />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:locale" content={t.meta.locale} />
+        <meta property="og:locale:alternate" content={lang === 'es' ? 'en_US' : 'es_ES'} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={t.meta.ogAlt} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={t.meta.description} />
+        <meta name="twitter:image" content={ogImage} />
+
+        <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+      </>
+    )}
+
+    <!-- Evita el parpadeo del contenido que GSAP anima al hidratar: con JS se oculta desde el CSS
+         ([data-reveal], [data-card]) hasta que StoryScene marca html[data-ready]. Si algo falla
+         y no llega a marcarse, a los 4 s se vuelve a mostrar todo. -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!document.documentElement.dataset.ready) document.documentElement.classList.remove('js');
+      }, 4000);
+    </script>
+
+    <ClientRouter fallback="swap" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,77 @@
+---
+// Tarjeta de presentación: zona izquierda violeta con grano, zona derecha azul marino
+// (transparente: se ve el recuadro #0c123a semitransparente de detrás) y una curva divisoria
+// inspirada en el trazo del logo. Todo el arte es un SVG de 700x430 recortado con "slice".
+import { contact } from '../i18n/ui';
+
+interface Props { title: string }
+const { title } = Astro.props;
+
+// Curva divisoria: sale vertical arriba, entra hacia el centro y vuelve a salir vertical abajo.
+const cut = 'M560 0C560 105 478 118 478 215C478 312 560 325 560 430';
+---
+<div class="contact-card-wrap">
+  <div class="biz-card">
+    <svg viewBox="0 0 700 430" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="violet-zone"><path d={`M0 0H560C560 105 478 118 478 215C478 312 560 325 560 430H0Z`} /></clipPath>
+        <filter id="grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+      </defs>
+      <g clip-path="url(#violet-zone)">
+        <rect width="700" height="430" style="fill:var(--color-violet)" fill-opacity="0.84" />
+        <rect width="700" height="430" filter="url(#grain)" opacity="0.22" style="mix-blend-mode:overlay" />
+      </g>
+      <!-- corchete blanco con el trazo del logo -->
+      <path d={cut} fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" />
+      <!-- anillo y punto del logo en la zona azul marino -->
+      <circle cx="628" cy="96" r="30" fill="none" stroke="#fff" stroke-width="13" />
+      <circle cx="628" cy="204" r="19" fill="#fff" />
+    </svg>
+
+    <div class="biz-content">
+      <h2 class="biz-title">{title}</h2>
+      <div class="biz-rule" aria-hidden="true"></div>
+      <ul class="biz-list">
+        <li data-reveal>
+          <span class="biz-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 4.6 15.65" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.4 8.6v4.2c0 1.6 1.2 2.6 2.4 2.6 1.6 0 2.7-1.5 2.7-3.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+          <a href={contact.instagram} rel="me noopener" target="_blank">{contact.handle}</a>
+        </li>
+        <li data-reveal>
+          <span class="biz-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.6 3.5h2.7l1.4 4-1.8 1.4a11 11 0 0 0 5.7 5.7l1.4-1.8 4 1.4v2.7a2 2 0 0 1-2.1 2A15.5 15.5 0 0 1 4.6 5.6a2 2 0 0 1 2-2.1Z" fill="currentColor"/></svg></span>
+          <a href={`tel:${contact.phone}`}>{contact.phone}</a>
+        </li>
+        <li data-reveal>
+          <span class="biz-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m4.5 7.5 7.5 6 7.5-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <a href={`mailto:${contact.email}`}>{contact.email}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+  .contact-card-wrap { container-type: inline-size; }
+  .biz-card {
+    position: relative; aspect-ratio: 700 / 430; width: 100%;
+    border-radius: clamp(0.9rem, 4cqw, 1.5rem); overflow: hidden;
+  }
+  .biz-card > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .biz-content {
+    position: absolute; inset: 0 auto 0 0; width: 66%;
+    padding: 7cqw 3cqw 6cqw 7cqw; display: flex; flex-direction: column; justify-content: center; color: #fff;
+  }
+  .biz-title { font-family: var(--font-display); font-weight: 800; line-height: 1.1; font-size: clamp(1.05rem, 6.2cqw, 2rem); max-width: 11ch; }
+  .biz-rule { height: 2px; width: 62%; background: #fff; margin: 3.2cqw 0 4.2cqw; }
+  .biz-list { display: grid; gap: 2.4cqw; font-size: clamp(0.64rem, 2.9cqw, 0.95rem); }
+  .biz-list li { display: flex; align-items: center; gap: 2.4cqw; min-width: 0; }
+  .biz-list a, .biz-list span:last-child { overflow-wrap: anywhere; }
+  .biz-list a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .biz-icon {
+    flex: none; display: grid; place-items: center; width: 6.2cqw; height: 6.2cqw; min-width: 1.2rem; min-height: 1.2rem;
+    border-radius: 999px; background: #fff; color: var(--color-violet);
+  }
+  .biz-icon svg { width: 62%; height: 62%; }
+</style>

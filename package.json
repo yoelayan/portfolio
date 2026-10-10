@@ -1,0 +1,41 @@
+{
+  "name": "yoelayan-portfolio",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "start": "serve dist -l tcp://0.0.0.0:${PORT:-3000}",
+    "check": "astro check",
+    "assets": "node scripts/brand-assets.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "ci": "astro check && astro build && node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/svelte": "^9.0.1",
+    "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource-variable/source-code-pro": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@threlte/core": "^8.6.1",
+    "astro": "^7.3.8",
+    "gsap": "^3.15.0",
+    "serve": "^14.2.6",
+    "svelte": "^5.57.2",
+    "tailwindcss": "^4.3.3",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@fontsource/montserrat": "^5.3.0",
+    "@types/three": "^0.186.0",
+    "opentype.js": "^2.0.0",
+    "sharp": "^0.35.5",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

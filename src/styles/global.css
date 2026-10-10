@@ -1,0 +1,127 @@
+@import 'tailwindcss';
+
+/* Fuentes variables, solo subset "latin" (cubre ñ, tildes, ¿ ¡ y la puntuación usada).
+   Los mismos archivos se precargan en layouts/Base.astro. */
+@font-face {
+  font-family: 'Montserrat Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Code Pro Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('@fontsource-variable/source-code-pro/files/source-code-pro-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@theme {
+  --color-navy: #0c123a;
+  --color-violet: #8225d4;
+  --color-mint: #72e686;
+  --color-pink: #ec0056;
+  --color-sun: #faca54;
+  --color-sky: #48c8e2;
+  --font-mono: 'Source Code Pro Variable', ui-monospace, 'Cascadia Code', monospace;
+  --font-display: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-navy);
+  color: #fff;
+}
+/* Anti-parpadeo: con JS, el contenido que GSAP anima arranca oculto hasta html[data-ready] */
+@media (prefers-reduced-motion: no-preference) {
+  html.js:not([data-ready]) [data-reveal],
+  html.js:not([data-ready]) [data-card] { opacity: 0; }
+}
+
+/* Sin JS, el navegador hace el scroll suave; con JS lo hace GSAP (clase .gsap-scroll). */
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.gsap-scroll) { scroll-behavior: smooth; }
+}
+
+body {
+  font-family: var(--font-mono);
+  background: radial-gradient(120% 80% at 50% 0%, #141c5a 0%, var(--color-navy) 60%);
+  min-height: 100vh;
+}
+
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+/* Panel de texto legible sobre la escena 3D */
+.panel {
+  background: color-mix(in srgb, var(--color-navy) 72%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, #fff 12%, transparent);
+  border-radius: 1.25rem;
+}
+/* En móvil y tablet (modo "lite" de la escena) el desenfoque de fondo se quita: obliga a
+   recomponer el blur sobre un canvas que se redibuja cada frame. Se compensa con más opacidad. */
+@media (max-width: 1023px) {
+  .panel { backdrop-filter: none; background: color-mix(in srgb, var(--color-navy) 84%, transparent); }
+}
+
+/* Selección de texto: fondo #ec0056 con texto blanco (decisión de diseño) */
+::selection { background: var(--color-pink); color: #fff; text-shadow: none; }
+::-moz-selection { background: var(--color-pink); color: #fff; }
+
+/* Recuadro de contacto: #0c123a semitransparente (se ve el logo 3D detrás) */
+.contact-wrap {
+  background: color-mix(in srgb, var(--color-navy) 52%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  backdrop-filter: blur(1.5px);
+}
+@media (max-width: 1023px) { .contact-wrap { backdrop-filter: none; } }
+
+/* Llave de cierre "}" abajo a la izquierda del panel (como en el membrete) */
+.panel-brace::after {
+  content: '}'; position: absolute; left: 1.25rem; bottom: 0.4rem;
+  font-family: var(--font-mono); font-size: 3.25rem; line-height: 1; font-weight: 300; color: #fff;
+}
+.panel { position: relative; }
+
+/* Numeración de líneas: parte del documento (scrollea con la página), empieza en 1 arriba.
+   Se renderizan más números de los necesarios y el contenedor recorta al alto del body. */
+body { position: relative; }
+.code-gutter {
+  display: none; position: absolute; z-index: 25; left: 0; top: 0; bottom: 0; width: 2.75rem;
+  overflow: hidden; margin: 0; padding: 0.35rem 0 0 0.6rem; list-style: none;
+  font-size: 0.7rem; line-height: 1.6rem; color: color-mix(in srgb, #fff 32%, transparent);
+  border-right: 1px solid color-mix(in srgb, #fff 8%, transparent); pointer-events: none;
+}
+@media (min-width: 1024px) { .code-gutter { display: block; } }
+
+/* Fundido corto del texto al cambiar de idioma (el canvas persiste) */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.28s; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* Barra de scroll con la marca: carril azul marino, pulgar violeta que pasa a verde al interactuar.
+   WebKit/Blink usan los pseudo-elementos; Firefox, las propiedades estándar. */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--color-navy); border-left: 1px solid color-mix(in srgb, #fff 8%, transparent); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-violet); border-radius: 999px;
+  border: 3px solid var(--color-navy); /* deja aire alrededor del pulgar */
+}
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background: var(--color-mint); }
+::-webkit-scrollbar-corner { background: var(--color-navy); }
+@supports not selector(::-webkit-scrollbar) {
+  html { scrollbar-width: thin; scrollbar-color: var(--color-violet) var(--color-navy); }
+}
+
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--color-mint);
+  outline-offset: 3px;
+  border-radius: 0.25rem;
+}
+
+.sr-only-link:not(:focus) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+}

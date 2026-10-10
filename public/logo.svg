@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 40 366 210" role="img" aria-label="Yoel Ayan">
+  <path d="M50 62Q52 86 90 86Q150 86 180 112Q205 135 212 165" fill="none" stroke="#8225d4" stroke-width="26" stroke-linecap="round"/>
+  <path d="M374 62Q372 86 334 86Q274 86 244 112Q219 135 212 165" fill="none" stroke="#8225d4" stroke-width="26" stroke-linecap="round"/>
+  <path d="M212 150V232" fill="none" stroke="#8225d4" stroke-width="26"/>
+  <circle cx="131" cy="192" r="22" fill="#8225d4"/>
+  <circle cx="297" cy="190" r="34" fill="none" stroke="#8225d4" stroke-width="15"/>
+</svg>

@@ -1,0 +1,24 @@
+---
+// Etiqueta para tecnologías y herramientas. Úsala siempre que se mencione un stack
+// (proyectos, perfil, habilidades) para mantener un solo estilo.
+//
+//   <Badge>Django</Badge>
+//   <Badge variant="accent">AWS</Badge>
+interface Props {
+  /** outline: borde tenue (por defecto) · accent: borde y texto verde de marca. */
+  variant?: 'outline' | 'accent';
+  class?: string;
+}
+const { variant = 'outline', class: className } = Astro.props;
+---
+<span class:list={['badge', `badge-${variant}`, className]}><slot /></span>
+
+<style>
+  .badge {
+    display: inline-flex; align-items: center; white-space: nowrap;
+    padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid;
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 500; line-height: 1.3;
+  }
+  .badge-outline { border-color: color-mix(in srgb, #fff 28%, transparent); background: color-mix(in srgb, #fff 6%, transparent); color: #fff; }
+  .badge-accent { border-color: color-mix(in srgb, var(--color-mint) 70%, transparent); background: color-mix(in srgb, var(--color-mint) 10%, transparent); color: var(--color-mint); }
+</style>
