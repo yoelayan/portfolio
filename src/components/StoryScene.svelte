@@ -3,7 +3,7 @@
   import gsap from 'gsap';
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
-  import { keyframes, story } from '../lib/story';
+  import { keyframes, story, layout, type SceneState } from '../lib/story';
 
   let { alt }: { alt: string } = $props();
 
@@ -40,6 +40,54 @@
     for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
     return y;
   };
+
+  /**
+   * Pose del logo (cámara, posición, rotación, color…) como FUNCIÓN PURA de la posición de scroll.
+   *
+   * Antes había un gsap.to(story) por sección con scrub: cada tween captura su valor inicial la
+   * primera vez que se dibuja, así que tras un salto (enlace, imán, recarga con #hash) partía de
+   * una pose que no correspondía a la sección anterior, y al volver el logo quedaba mal colocado.
+   * Ahora, para cada scroll, se busca la sección actual y se mezcla keyframe[i-1] → keyframe[i]
+   * según el progreso: el mismo scroll da siempre la misma pose, vengas de donde vengas.
+   * El suavizado visual lo da el amortiguado de Scene.svelte.
+   */
+  const KEYS = Object.keys(keyframes[0]) as (keyof SceneState)[];
+  let sceneTops: number[] = [];
+
+  function measureScenes() {
+    sceneTops = Array.from(document.querySelectorAll<HTMLElement>('[data-scene]'))
+      .sort((a, b) => Number(a.dataset.scene) - Number(b.dataset.scene))
+      .map(absTop);
+
+    // Hueco libre del hero (solo "lite"): desde el menú hasta el primer texto, con un margen
+    const kicker = document.querySelector<HTMLElement>('section[data-scene="0"] p');
+    if (lite && kicker) {
+      layout.heroFreeTop = headerH();
+      layout.heroFreeBottom = absTop(kicker) - 16;
+    } else {
+      layout.heroFreeTop = layout.heroFreeBottom = 0;
+    }
+  }
+
+  function updateStory() {
+    if (reduced || sceneTops.length < 2) return;
+    const vh = window.innerHeight;
+    const y = window.scrollY;
+    // Sección más avanzada cuya transición ya empezó (su inicio: su parte superior entra por abajo)
+    let i = 0;
+    for (let k = 1; k < sceneTops.length; k++) if (y >= sceneTops[k] - vh) i = k;
+    if (i === 0) {
+      Object.assign(story, keyframes[0]);
+      return;
+    }
+    // La transición termina cuando la sección llega al 20 % de la pantalla (como antes)
+    const start = sceneTops[i] - vh;
+    const end = sceneTops[i] - vh * 0.2;
+    const p = Math.min(1, Math.max(0, (y - start) / (end - start)));
+    const from = keyframes[i - 1];
+    const to = keyframes[i];
+    for (const key of KEYS) story[key] = from[key] + (to[key] - from[key]) * p;
+  }
 
   /** Altura útil bajo el menú fijo. */
   const headerH = () => document.querySelector('header')?.offsetHeight ?? 64;
@@ -128,26 +176,22 @@
           scrollTrigger: { trigger: section, start: 'bottom 75%', end: 'bottom top', scrub: 0.6 },
         });
       });
-
-      // 2) Un tween por sección, escrubeado con el scroll (scrollytelling)
-      gsap.utils.toArray<HTMLElement>('[data-scene]').forEach((section) => {
-        const i = Number(section.dataset.scene);
-        if (!i) return;
-        gsap.to(story, {
-          ...keyframes[i],
-          ease: 'none',
-          scrollTrigger: { trigger: section, start: 'top bottom', end: 'top 20%', scrub: 0.6 },
-        });
-      });
     });
     // El DOM nuevo aún no tiene layout final: recalcular para que los elementos
     // que ya están en pantalla se revelen en vez de quedarse ocultos.
-    requestAnimationFrame(() => ScrollTrigger.refresh());
+    measureScenes();
+    updateStory();
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      measureScenes();
+      updateStory();
+    });
     markReady();
   }
 
   onMount(() => {
     gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+    if (import.meta.env.DEV) (window as unknown as { __story: typeof story }).__story = story;
     // Con lag smoothing (por defecto) GSAP avanza solo 33 ms por fotograma cuando uno tarda más de
     // 500 ms: en un dispositivo lento (o con WebGL por software) el scroll de los enlaces casi se
     // detendría. Se desactiva para que las animaciones sigan el tiempo real.
@@ -169,7 +213,16 @@
     };
 
     // La numeración se ajusta si cambia la altura de la página (fuentes, redimensionado)
-    const bodyRO = new ResizeObserver(() => fitGutter());
+    window.addEventListener('scroll', updateStory, { passive: true });
+    const onRefresh = () => {
+      measureScenes();
+      updateStory();
+    };
+    ScrollTrigger.addEventListener('refresh', onRefresh);
+    const bodyRO = new ResizeObserver(() => {
+      fitGutter();
+      onRefresh();
+    });
     bodyRO.observe(document.body);
 
     // Si se pierde el contexto WebGL, se vuelve al logo estático en vez de dejar un canvas en blanco
@@ -284,6 +337,8 @@
       window.removeEventListener('touchcancel', onTouchEnd);
       document.documentElement.classList.remove('gsap-scroll');
       bodyRO.disconnect();
+      window.removeEventListener('scroll', updateStory);
+      ScrollTrigger.removeEventListener('refresh', onRefresh);
       host.removeEventListener('webglcontextlost', onContextLost, true);
       document.removeEventListener('visibilitychange', onVis);
       document.removeEventListener('astro:before-preparation', onBeforeSwap);
@@ -306,8 +361,8 @@
   {/if}
   {#if Canvas && Scene && !failed}
     {#key lite}
-      <Canvas dpr={Math.min(window.devicePixelRatio, lite ? 1.25 : 1.75)} renderMode={paused || reduced ? 'manual' : 'always'}>
-        <Scene {lite} animate={!reduced} />
+      <Canvas dpr={Math.min(window.devicePixelRatio, lite ? 1.25 : 1.5)} renderMode="manual">
+        <Scene {lite} animate={!reduced} active={!paused} />
       </Canvas>
     {/key}
   {/if}

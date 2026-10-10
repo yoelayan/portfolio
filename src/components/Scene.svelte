@@ -1,11 +1,41 @@
 <script lang="ts">
-  import { T, useTask } from '@threlte/core';
+  import { T, useTask, useThrelte } from '@threlte/core';
   import * as THREE from 'three';
   import { onMount, onDestroy } from 'svelte';
-  import { story } from '../lib/story';
+  import { story, layout } from '../lib/story';
   import { LOGO, PALETTE } from '../lib/brand.js';
 
-  let { lite = false, animate = true }: { lite?: boolean; animate?: boolean } = $props();
+  let { lite = false, animate = true, active = true }: { lite?: boolean; animate?: boolean; active?: boolean } = $props();
+
+  // Bucle de render propio, limitado a 60 FPS. Con renderMode "always" Threlte dibuja en cada
+  // rAF, es decir, a 120–165 FPS en pantallas de alta frecuencia (≈6.700 draw calls/s medidas):
+  // coste de GPU y de hilo principal que se nota sobre todo cuando el scroll lo mueve JavaScript
+  // (enlaces e imán). Con "manual" solo se dibuja cuando llamamos a advance().
+  const { advance } = useThrelte();
+  const FRAME_MS = 1000 / 60;
+  onMount(() => {
+    let raf = 0;
+    let last = 0;
+    let staticFrames = 0;
+    const loop = (now: number) => {
+      raf = requestAnimationFrame(loop);
+      if (!active || document.hidden) return;
+      // Con movimiento reducido solo se pintan unos fotogramas (tras montar o redimensionar)
+      if (!animate && staticFrames >= 10) return;
+      // 0,75 de tolerancia: con rAF a 120/144 Hz el siguiente tick cae justo por debajo de 16,7 ms
+      if (now - last < FRAME_MS * 0.75) return;
+      last = now;
+      staticFrames++;
+      advance();
+    };
+    raf = requestAnimationFrame(loop);
+    const onResize = () => (staticFrames = 0);
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  });
 
 
   // El logo se reconstruye con primitivas (no hay .glb): tubos, esfera y toro.
@@ -133,6 +163,8 @@
   const tint = new THREE.Color();
   const white = new THREE.Color(PALETTE.white);
   let t = 0;
+  const LITE_CAM = 1.55; // la cámara se aleja en pantallas estrechas
+  const LOGO_UNITS_H = 4.7; // alto del logo en unidades de escena
   const sideFactor = lite ? 0.15 : 1; // en móvil el logo no se desplaza al lado
 
   useTask((dt) => {
@@ -142,15 +174,28 @@
 
     camera.position.x += (story.camX - camera.position.x) * k;
     camera.position.y += (story.camY - camera.position.y) * k;
-    camera.position.z += (story.camZ * (lite ? 1.55 : 1) - camera.position.z) * k;
+    camera.position.z += (story.camZ * (lite ? LITE_CAM : 1) - camera.position.z) * k;
     camera.lookAt(0, 0, 0);
 
     logo.rotation.y += (story.rotY - logo.rotation.y) * k;
     logo.rotation.x += (story.rotX - logo.rotation.x) * k;
     logo.position.x += (story.logoX * sideFactor - logo.position.x) * k;
     const lift = lite ? story.lift * 3.2 : 0;
-    logo.position.y += (story.logoY + lift + Math.sin(t * 0.8) * 0.12 - logo.position.y) * k;
-    const s = story.scale * (lite ? 0.8 : 1);
+    let baseY = story.logoY + lift;
+    let fit = 1;
+    // Móvil, hero: centrar el logo en el hueco libre sobre el texto y reducirlo si el hueco es pequeño.
+    // Se mezcla con heroW para que la transición hero → Perfil sea continua.
+    if (lite && story.heroW > 0 && layout.heroFreeBottom > layout.heroFreeTop) {
+      const vh = window.innerHeight;
+      const unitsPerPx = (2 * Math.tan(THREE.MathUtils.degToRad(20)) * story.camZ * LITE_CAM) / vh; // fov 40°
+      const freeH = layout.heroFreeBottom - layout.heroFreeTop;
+      const logoPx = (LOGO_UNITS_H * 0.8) / unitsPerPx;
+      const centerUpPx = vh / 2 - (layout.heroFreeTop + layout.heroFreeBottom) / 2;
+      baseY += story.heroW * (centerUpPx * unitsPerPx - baseY);
+      fit = 1 + story.heroW * (Math.min(1, Math.max(0.45, (freeH * 0.94) / logoPx)) - 1);
+    }
+    logo.position.y += (baseY + Math.sin(t * 0.8) * 0.12 - logo.position.y) * k;
+    const s = story.scale * (lite ? 0.8 : 1) * fit;
     logo.scale.setScalar(logo.scale.x + (s - logo.scale.x) * k);
 
     // Color de la sección: el logo entero (cuerpo, punto y anillo), la luz y las líneas de código

@@ -55,15 +55,11 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
 /* Panel de texto legible sobre la escena 3D */
 .panel {
-  background: color-mix(in srgb, var(--color-navy) 72%, transparent);
-  backdrop-filter: blur(10px);
+  /* Sin backdrop-filter: sobre un canvas que se redibuja cada frame obliga a la GPU a repetir
+     el desenfoque en cada fotograma. Se compensa con más opacidad. */
+  background: color-mix(in srgb, var(--color-navy) 82%, transparent);
   border: 1px solid color-mix(in srgb, #fff 12%, transparent);
   border-radius: 1.25rem;
-}
-/* En móvil y tablet (modo "lite" de la escena) el desenfoque de fondo se quita: obliga a
-   recomponer el blur sobre un canvas que se redibuja cada frame. Se compensa con más opacidad. */
-@media (max-width: 1023px) {
-  .panel { backdrop-filter: none; background: color-mix(in srgb, var(--color-navy) 84%, transparent); }
 }
 
 /* Selección de texto: fondo #ec0056 con texto blanco (decisión de diseño) */
@@ -74,14 +70,23 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
 .contact-wrap {
   background: color-mix(in srgb, var(--color-navy) 52%, transparent);
   border: 1px solid color-mix(in srgb, #fff 14%, transparent);
-  backdrop-filter: blur(1.5px);
 }
-@media (max-width: 1023px) { .contact-wrap { backdrop-filter: none; } }
 
-/* Llave de cierre "}" abajo a la izquierda del panel (como en el membrete) */
+/* Llave de cierre "}" abajo a la izquierda del panel (como en el membrete). Ocupa su propio hueco:
+   el relleno inferior se calcula a partir de su tamaño (--brace) + su separación del borde + un
+   espacio libre sobre ella, para que nunca se monte sobre el último texto o las etiquetas. */
+.panel-brace {
+  --brace: 2.75rem;        /* tamaño de la llave (móvil) */
+  --brace-gap: 1.75rem;    /* aire entre el contenido y la llave */
+  padding-bottom: calc(var(--brace) + 0.5rem + var(--brace-gap));
+}
+@media (min-width: 640px) {
+  .panel-brace { --brace: 3.25rem; --brace-gap: 1.75rem; }
+}
 .panel-brace::after {
-  content: '}'; position: absolute; left: 1.25rem; bottom: 0.4rem;
-  font-family: var(--font-mono); font-size: 3.25rem; line-height: 1; font-weight: 300; color: #fff;
+  content: '}'; position: absolute; left: 1.25rem; bottom: 0.5rem;
+  font-family: var(--font-mono); font-size: var(--brace); line-height: 1; font-weight: 300; color: #fff;
+  pointer-events: none;
 }
 .panel { position: relative; }
 
